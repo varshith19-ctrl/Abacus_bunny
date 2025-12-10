@@ -25,3 +25,13 @@ def detect_anomalies(df):
     
     spikes = df[df['cost'] > threshold]
     return spikes, threshold
+
+
+def generate_service_breakdown():
+    """Generates mock data for a Treemap."""
+    data = {
+        "Service": ["EC2 (Compute)", "RDS (Database)", "S3 (Storage)", "Lambda (Serverless)", "Data Transfer", "CloudWatch"],
+        "Cost": [350, 120, 45, 15, 80, 20],  # Mock values
+        "Parent": ["Compute", "Database", "Storage", "Compute", "Network", "Observability"]
+    }
+    return pd.DataFrame(data)

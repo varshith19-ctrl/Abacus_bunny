@@ -4,6 +4,7 @@ import detect_spike         # The Math
 import agent_explain           # The AI
 import cleanup    # The Zombie Hunter
 
+
 # --- PAGE SETUP ---
 st.set_page_config(page_title="FinOps Guardian", page_icon="💰")
 st.title("💰 Autonomous FinOps Guardian")
@@ -76,7 +77,25 @@ if st.button("🚀 Run Full Analysis"):
         st.dataframe(optimizations_df)
     else:
         st.success("All workloads are optimized.")    
+    # ... inside app.py Part 1 ...
+    
+    st.line_chart(df.set_index('date'))
 
+    # --- NEW: SERVICE BREAKDOWN ---
+    with st.expander("📊 View Cost Breakdown by Service"):
+        import plotly.express as px
+        
+        service_df = detect_spike.generate_service_breakdown()
+        
+        fig = px.treemap(
+            service_df, 
+            path=['Parent', 'Service'], 
+            values='Cost',
+            color='Cost',
+            color_continuous_scale='RdBu_r',
+            title='Where is the money going?'
+        )
+        st.plotly_chart(fig, use_container_width=True)
 else:
     st.info("Click 'Run Full Analysis' to scan your cloud.")
 
