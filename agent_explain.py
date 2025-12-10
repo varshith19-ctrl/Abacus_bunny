@@ -36,4 +36,4 @@ def get_gemini_response(spike_row, logs):
         return response.text
         
     except Exception as e:
-        return f"⚠️ Error talking to AI: {e}"
+        return f" Error talking to AI: {e}"
