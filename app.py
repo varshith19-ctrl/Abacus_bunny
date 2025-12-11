@@ -1,8 +1,8 @@
 # app.py
 import streamlit as st
-import detect_spike         # The Math
-import agent_explain        # The AI
-import cleanup              # The Zombie Hunter
+import detect_spike        
+import agent_explain       
+import cleanup              
 import plotly.express as px # For the charts
 
 # --- PAGE SETUP ---
@@ -15,7 +15,20 @@ st.sidebar.header("Control Panel")
 days_to_simulate = st.sidebar.slider("Days to Simulate", 10, 60, 30)
 spike_amount = st.sidebar.number_input("Spike Amount ($)", value=500)
 
-if st.button("🚀 Run Full Analysis"):
+# --- SESSION STATE SETUP (THE FIX) ---
+
+if 'analysis_active' not in st.session_state:
+    st.session_state.analysis_active = False
+
+def start_analysis():
+    st.session_state.analysis_active = True
+    st.session_state.zombies_fixed = False # Reset zombie state on new run
+
+# The Button calls the function to save the state
+st.button("🚀 Run Full Analysis", on_click=start_analysis)
+
+# --- MAIN EXECUTION ---
+if st.session_state.analysis_active:
     
     # --- PART 1: BILLING ANALYSIS ---
     st.subheader("1. Cloud Billing Data")
@@ -51,7 +64,7 @@ if st.button("🚀 Run Full Analysis"):
     spikes, threshold = detect_spike.detect_anomalies(df)
     
     if not spikes.empty:
-        st.error(f" Alert! Found {len(spikes)} cost spike(s).")
+        st.error(f"⚠️ Alert! Found {len(spikes)} cost spike(s).")
         st.dataframe(spikes)
         
         # --- PART 3: AI EXPLANATION ---
@@ -65,10 +78,14 @@ if st.button("🚀 Run Full Analysis"):
         
         with st.spinner("Asking Gemini AI to analyze logs..."):
             # Call agent_explain to talk to Google
-            ai_response = agent_explain.get_gemini_response(spikes.iloc[-1], mock_logs)
-            st.markdown(ai_response)
+            # We iterate just in case, but usually user clicks one
+            if not spikes.empty:
+                last_spike = spikes.iloc[-1]
+                if st.button(f"🧠 Explain Spike on {last_spike['date'].strftime('%Y-%m-%d')}"):
+                     ai_response = agent_explain.get_gemini_response(last_spike, mock_logs)
+                     st.markdown(ai_response)
     else:
-        st.success(" No anomalies detected. Costs are within normal range.")
+        st.success("✅ No anomalies detected. Costs are within normal range.")
 
     st.markdown("---")
 
@@ -90,7 +107,7 @@ if st.button("🚀 Run Full Analysis"):
             st.caption("Scanning Active Cloud Inventory...")
             st.dataframe(inventory_df)  # Show full inventory
             
-            st.error(f" Waste Detected! Found {len(zombie_ids)} zombie instance(s).")
+            st.error(f"⚠️ Waste Detected! Found {len(zombie_ids)} zombie instance(s).")
             st.code(f"IDS: {zombie_ids}", language="json")
             
             # The "Trigger" Button
@@ -111,7 +128,7 @@ if st.button("🚀 Run Full Analysis"):
                 st.rerun()
                 
         else:
-            st.success("Resource Hygiene is Good. No idle zombies found.")
+            st.success("✅ Resource Hygiene is Good. No idle zombies found.")
             
     else:
         # STATE B: Problem Fixed (Show success message)
